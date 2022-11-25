@@ -1,29 +1,35 @@
 #pragma once
 
 #include <QVBoxLayout>
-#include "gui/customwidgets/slidehpanel.h"
+#include "gui/customwidgets/slidepanel.h"
 #include "gui/customwidgets/actionbutton.h"
 #include "gui/panels/mainpanel/thumbnailstripproxy.h"
 
-class MainPanel : public SlideHPanel {
+class MainPanel : public SlidePanel {
     Q_OBJECT
 public:
     MainPanel(FloatingWidgetContainer *parent);
     ~MainPanel();
-    void setHeight(int newHeight);
-    void setPosition(PanelHPosition);
+    void setPosition(PanelPosition);
     void setExitButtonEnabled(bool mode);
     std::shared_ptr<ThumbnailStripProxy> getThumbnailStrip();
-
     void setupThumbnailStrip();
-private slots:
+    QSize sizeHint() const;
+
+public slots:
     void readSettings();
+
+signals:
+    void pinned(bool mode);
+
+private slots:
+    void onPinClicked();
 
 private:
     QVBoxLayout buttonsLayout;
     QWidget buttonsWidget;
     std::shared_ptr<ThumbnailStripProxy> thumbnailStrip;
-    ActionButton *openButton, *settingsButton, *exitButton, *folderViewButton;
+    ActionButton *openButton, *settingsButton, *exitButton, *folderViewButton, *pinButton;
 
 protected:
     virtual void paintEvent(QPaintEvent* event);

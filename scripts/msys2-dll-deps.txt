@@ -15,10 +15,11 @@ libexpat-1.dll
 libgcc_s_seh-1.dll
 libgomp-1.dll
 libheif.dll
+libhwy.dll
 libiconv-2.dll
 libidn2-0.dll
 libintl-8.dll
-libjasper-4.dll
+libjasper.dll
 libjbig-0.dll
 libjpeg-8.dll
 libjxl.dll
@@ -45,3 +46,5 @@ libx265.dll
 libzstd.dll
 rav1e.dll
 zlib1.dll
+libSvtAv1Enc.dll
+libyuv.dll

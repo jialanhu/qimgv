@@ -1,4 +1,60 @@
 /*----------------------------------------------------------------------------*/
+/* Settings window */
+
+SettingsDialog QPushButton {
+    min-height: %button_height%;
+}
+
+SettingsDialog QComboBox {
+    /*min-height: 20px;*/
+}
+
+[accessibleName="SLine"] {
+    background-color: %sys_window_tinted%;
+    min-height: 1px;
+    max-height: 1px;
+}
+
+[accessibleName="SHeaderLine"] {
+    background-color: %sys_window_tinted_hc%;
+    min-height: 1px;
+    max-height: 1px;
+}
+
+[accessibleName="SHeaderText"] {
+    font-size: %font_large%;
+}
+
+[accessibleName="SSideBarContainer"] {
+    background-color: %sys_window_tinted_lc2%;
+    border-right: 1px solid %sys_window_tinted_lc%;
+}
+
+SSideBarItem {
+    border-radius: 5px;
+}
+
+SSideBarItem[checked="true"] {
+    background-color: %sys_window_tinted_hc%;
+}
+
+[accessibleName="SGroup"] {
+    /*border: 1px solid %sys_window_tinted_hc%;*/
+    border: 1px solid %sys_window_tinted_lc%;
+    border-radius: 6px;
+    background-color: %sys_window_tinted_lc2%;
+}
+
+[accessibleName="SGroup"]:hover {
+    /*border-color: %sys_window_tinted_hc%;*/
+    /*background-color: %sys_window_tinted_lc%;*/
+}
+
+[accessibleName="SNoteText"] {
+    color: %sys_text_secondary_rgba%;
+}
+
+/*----------------------------------------------------------------------------*/
 /* Buttons */
 
 [accessibleName="Button"], [accessibleName="ButtonSetLeft"], [accessibleName="ButtonSetRight"]
@@ -116,6 +172,11 @@
     border: 1px solid %folderview_hc2%;
 }
 
+[accessibleName="ButtonSmall"][checked="true"] {
+    background-color: %folderview_hc%;
+    border: 1px solid %folderview_hc%;
+}
+
 /*----------------------------------------------------------------------------*/
 /* remove ugly dotted border  */
 QComboBox QAbstractItemView {
@@ -182,14 +243,25 @@ FloatingWidget {
     border-top-right-radius: 1px;
 }
 /*----------------------------------------------------------------------------*/
-[accessibleName="OverlayCloseButton"] {
+[accessibleName="OverlayHeaderButton"],
+[accessibleName="OverlayHeaderIcon"] {
+    min-height: %overlay_header_size%;
+    min-width: %overlay_header_size%;
+}
+
+[accessibleName="OverlayHeaderButton"] {
     background-color: transparent;
-    padding: 4px;
+    margin: 3px;
     border-radius: 3px;
 }
 
-[accessibleName="OverlayCloseButton"]:hover {
+[accessibleName="OverlayHeaderButton"]:hover {
     background-color: %button_hover%;
+}
+
+[accessibleName="OverlayHeaderButton"][pressed="true"] {
+    background-color: %button_pressed%;
+    color: %text%;
 }
 
 [accessibleName="OverlayHeaderLabel"] {
@@ -220,6 +292,7 @@ RenameOverlay {
     background-color: %widget%;
     border: 1px solid %widget_border%;
     border-radius: 3px;
+    min-width: %rename_overlay_width%;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -343,7 +416,7 @@ SidePanel QComboBox QAbstractItemView::item:selected {
 }
 
 [accessibleName="HLineSeparator"] {
-    background-color: %button%;
+    border-bottom: 1px solid %button%;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -420,6 +493,11 @@ ThumbnailStrip {
     background-color: %folderview%;
 }
 /*----------------------------------------------------------------------------*/
+PanelButtonsHolder {
+    background-color: red;
+    border: 1px solid blue;
+}
+/*----------------------------------------------------------------------------*/
 FolderGridView {
     background-color: %folderview%;
 }
@@ -431,8 +509,10 @@ FolderView {
     border-top: 1px solid %topbar_border_rgba%;
 }
 /*----------------------------------------------------------------------------*/
-[accessibleName="FolderViewPanel"] { /* top bar - rename */
+[accessibleName="FolderViewTopBar"] {
     background-color: %folderview_topbar%;
+    min-height: %top_panel_height%;
+    max-height: %top_panel_height%;
 }
 
 [accessibleName="PathBar"] {
@@ -517,7 +597,7 @@ FVOptionsPopup QLabel {
 
 ThumbnailStrip QScrollBar:horizontal {
     height: 13px;
-    background-color: transparent;
+    background-color: %folderview%;
 }
 
 ThumbnailStrip QScrollBar::handle:horizontal {
@@ -526,6 +606,21 @@ ThumbnailStrip QScrollBar::handle:horizontal {
 }
 
 ThumbnailStrip QScrollBar::handle:horizontal:hover {
+    background-color: %scrollbar_hover%;
+    border-color: %scrollbar_hover%;
+}
+
+ThumbnailStrip QScrollBar:vertical {
+    width: 13px;
+    background-color: %folderview%;
+}
+
+ThumbnailStrip QScrollBar::handle:vertical {
+    background-color: %scrollbar%;
+    min-height: 60px;
+}
+
+ThumbnailStrip QScrollBar::handle:vertical:hover {
     background-color: %scrollbar_hover%;
     border-color: %scrollbar_hover%;
 }
@@ -556,9 +651,12 @@ ContextMenu {
     background-color: %widget%;
     border: 1px solid %widget_border%;
     border-radius: %contextmenu_border_radius%;
+    min-width: %context_menu_width%;
 }
 ContextMenu QLabel {
     color: %text_secondary_rgba%;
+    margin: 0px 0px;
+    padding: 0px 0px;
 }
 /*----------------------------------------------------------------------------*/
 [accessibleName="MenuItem"]:hover {
@@ -582,8 +680,7 @@ ContextMenu QLabel {
 }
 
 [accessibleName="ContextMenuButton"] {
-    padding: 4px;
-    border-radius: 2px;
+    min-height: %context_menu_button_height%;
 }
 
 [accessibleName="ContextMenuButton"]:hover {
@@ -619,7 +716,6 @@ ZoomIndicatorOverlay {
 
 ZoomIndicatorOverlay QLabel {
     color: %overlay_text%;
-    /*font: bold;*/
 }
 
 /*----------------------------------------------------------------------------*/
@@ -781,25 +877,6 @@ BookmarksItem[highlighted="true"] {
 [accessibleName="FolderViewSplitter"]::handle {
     background-color: %folderview%;
 }
-
-/*----------------------------------------------------------------------------*/
-SettingsDialog QPushButton,
-SettingsDialog QComboBox {
-    min-height: 20px;
-}
-
-[accessibleName="StyledOptionsGroup"] {
-    /* This needs to look "ok" with both light and dark themes. May need further tweaking */
-    background-color: %system_window_tinted%;
-    border: 1px solid %system_window_tinted%;
-    border-radius: 3px;
-    /* border-top: 4px solid rgba(130, 130, 130, 30); */
-}
-
-[accessibleName="SettingsBottomWidget"] {
-    /* This needs to look "ok" with both light and dark themes. May need further tweaking */
-    background-color: %system_window_tinted%;
-}
 /*----------------------------------------------------------------------------*/
 [accessibleName="VideoPlayerInitProxy"] QLabel {
     color: #BB0000;
@@ -826,6 +903,5 @@ PrintDialog QCheckBox {
 
 PrintDialog QRadioButton:hover,
 PrintDialog QCheckBox:hover {
-    /*  background-color: %system_window_tinted%;  */
+    /*  background-color: %sys_window_tinted%;  */
 }
-

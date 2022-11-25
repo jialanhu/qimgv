@@ -7,6 +7,28 @@ if(APPLE)
     set(APPLE_ICON_PATH "distrib/${APPLE_ICON_NAME}")
 endif()
 
+# TRANSLATIONS
+find_package(Qt${QT_VERSION_MAJOR} COMPONENTS LinguistTools)
+# Example of creating a new translation file.
+# 1. cd into qimgv directory and run:
+#   lupdate -recursive . -ts res/translations/qimgv_en_US.ts    [replace "en_US" with your locale]
+# 2. Add your .ts filename into TS_FILES list below
+# 3. Translate it with Qt Linguist
+set(TS_FILES
+    "zh_CN.ts"
+    "uk_UA.ts"
+)
+list(TRANSFORM TS_FILES PREPEND ${CMAKE_CURRENT_SOURCE_DIR}/res/translations/)
+set_source_files_properties(${TS_FILES} PROPERTIES OUTPUT_LOCATION ${PROJECT_BINARY_DIR}/qimgv/translations)
+
+# 1. Create 'qimgv_lupdate' target to update .ts files (needs to be called manually)
+# 2. Compile .ts > .qm
+if(${QT_VERSION_MAJOR} EQUAL 5)
+    add_custom_target(qimgv_lupdate COMMAND ${Qt5_LUPDATE_EXECUTABLE} -recursive
+        ${CMAKE_CURRENT_SOURCE_DIR} -ts ${TS_FILES})
+    qt5_add_translation(QM_FILES ${TS_FILES})
+endif()
+
 # ADD EXECUTABLE
 add_executable(qimgv
     appversion.cpp
@@ -21,7 +43,14 @@ add_executable(qimgv
     resources.qrc
     qimgv.rc
     ${APPLE_ICON_PATH}
+    ${QM_FILES}
 )
+
+# update .ts, compile .qm (qt6 case)
+if(${QT_VERSION_MAJOR} EQUAL 6)
+    qt_add_lupdate(qimgv TS_FILES ${TS_FILES})
+    qt_add_lrelease(qimgv TS_FILES ${TS_FILES})
+endif()
 
 # ADD SOURCES
 add_subdirectory(components)
@@ -95,8 +124,7 @@ elseif(NOT UNIX)
 endif()
 
 ## INSTALLATION
-install(TARGETS qimgv
-    DESTINATION bin)
+install(TARGETS qimgv DESTINATION bin)
 
 # .desktop
 install(FILES distrib/qimgv.desktop
@@ -111,5 +139,23 @@ install(FILES distrib/hicolor/scalable/apps/qimgv.svg
     DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/icons/hicolor/scalable/apps)
 
 # AppData manifest
-install(FILES distrib/qimgv.appdata.xml
-    DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/metainfo)
+install(FILES distrib/qimgv.appdata.xml DESTINATION ${CMAKE_INSTALL_FULL_DATAROOTDIR}/metainfo)
+
+# Install internationalization language files
+if(WIN32)
+    install(DIRECTORY "${PROJECT_BINARY_DIR}/qimgv/translations" DESTINATION "${CMAKE_INSTALL_BINDIR}")
+else()
+    ADD_DEFINITIONS(-DTRANSLATIONS_PATH="${CMAKE_INSTALL_FULL_DATAROOTDIR}/qimgv/translations")
+    install(DIRECTORY "${PROJECT_BINARY_DIR}/qimgv/translations" DESTINATION "${CMAKE_INSTALL_FULL_DATAROOTDIR}/qimgv")
+endif()
+
+# uninstall target
+if(NOT TARGET uninstall)
+  configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake_uninstall.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake"
+    IMMEDIATE @ONLY)
+
+  add_custom_target(uninstall
+    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
+endif()

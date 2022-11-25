@@ -11,14 +11,14 @@
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+   <sizepolicy hsizetype="Minimum" vsizetype="MinimumExpanding">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
-    <width>200</width>
+    <width>250</width>
     <height>300</height>
    </size>
   </property>
@@ -31,6 +31,9 @@
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
     <number>8</number>
+   </property>
+   <property name="sizeConstraint">
+    <enum>QLayout::SetMinAndMaxSize</enum>
    </property>
    <property name="leftMargin">
     <number>18</number>
@@ -82,6 +85,9 @@
      <layout class="QVBoxLayout" name="verticalLayout">
       <property name="spacing">
        <number>8</number>
+      </property>
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMinAndMaxSize</enum>
       </property>
       <property name="leftMargin">
        <number>0</number>
@@ -295,6 +301,9 @@
       <property name="spacing">
        <number>8</number>
       </property>
+      <property name="sizeConstraint">
+       <enum>QLayout::SetMinAndMaxSize</enum>
+      </property>
       <property name="leftMargin">
        <number>0</number>
       </property>
@@ -472,6 +481,9 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="sizeConstraint">
+      <enum>QLayout::SetMinAndMaxSize</enum>
+     </property>
      <property name="topMargin">
       <number>0</number>
      </property>
@@ -517,6 +529,22 @@
     </widget>
    </item>
    <item>
+    <spacer name="horizontalSpacer_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::MinimumExpanding</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>250</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -533,9 +561,10 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>StyledComboBox</class>
-   <extends>QComboBox</extends>
-   <header>gui/customwidgets/styledcombobox.h</header>
+   <class>IconWidget</class>
+   <extends>QWidget</extends>
+   <header>gui/customwidgets/iconwidget.h</header>
+   <container>1</container>
   </customwidget>
   <customwidget>
    <class>PushButtonFocusInd</class>
@@ -543,15 +572,14 @@
    <header>gui/customwidgets/pushbuttonfocusind.h</header>
   </customwidget>
   <customwidget>
+   <class>StyledComboBox</class>
+   <extends>QComboBox</extends>
+   <header>gui/customwidgets/styledcombobox.h</header>
+  </customwidget>
+  <customwidget>
    <class>SpinBoxInputFix</class>
    <extends>QSpinBox</extends>
    <header>gui/customwidgets/spinboxinputfix.h</header>
-  </customwidget>
-  <customwidget>
-   <class>IconWidget</class>
-   <extends>QWidget</extends>
-   <header>gui/customwidgets/iconwidget.h</header>
-   <container>1</container>
   </customwidget>
  </customwidgets>
  <tabstops>

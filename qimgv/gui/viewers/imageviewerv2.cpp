@@ -4,7 +4,7 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
     pixmap(nullptr),
     pixmapScaled(nullptr),
     movie(nullptr),
-    transparencyGridEnabled(false),
+    transparencyGrid(false),
     expandImage(false),
     smoothAnimatedImages(true),
     smoothUpscaling(true),
@@ -12,7 +12,8 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
     keepFitMode(false),
     loopPlayback(true),
     mIsFullscreen(false),
-    absoluteStep(false),
+    scrollBarWorkaround(true),
+    useFixedZoomLevels(false),
     mouseInteraction(MouseInteractionState::MOUSE_NONE),
     minScale(0.01f),
     maxScale(500.0f),
@@ -26,9 +27,12 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
     setViewportUpdateMode(QGraphicsView::MinimalViewportUpdate);
     this->viewport()->setAttribute(Qt::WA_OpaquePaintEvent, true);
     setFocusPolicy(Qt::NoFocus);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setAcceptDrops(false);
 
     dpr = this->devicePixelRatioF();
+    hs = horizontalScrollBar();
+    vs = verticalScrollBar();
 
     scrollTimeLineY = new QTimeLine();
     scrollTimeLineY->setEasingCurve(QEasingCurve::OutSine);
@@ -48,13 +52,19 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
     scaleTimer->setSingleShot(true);
     scaleTimer->setInterval(80);
 
+    checkboard = new QPixmap(":res/icons/common/other/checkerboard.png");
+
     lastTouchpadScroll.start();
 
     zoomThreshold = static_cast<int>(devicePixelRatioF() * 4.);
 
     pixmapItem.setTransformationMode(Qt::SmoothTransformation);
     pixmapItem.setScale(1.0f);
+    pixmapItem.setOffset(10000, 10000);
+    pixmapItem.setTransformOriginPoint(10000, 10000);
     pixmapItemScaled.setScale(1.0f);
+    pixmapItemScaled.setOffset(10000, 10000);
+    pixmapItemScaled.setTransformOriginPoint(10000, 10000);
 
     this->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     this->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
@@ -86,6 +96,7 @@ ImageViewerV2::~ImageViewerV2() {
 }
 
 void ImageViewerV2::readSettings() {
+    transparencyGrid = settings->transparencyGrid();
     smoothAnimatedImages = settings->smoothAnimatedImages();
     smoothUpscaling = settings->smoothUpscaling();
     expandImage = settings->expandImage();
@@ -95,9 +106,15 @@ void ImageViewerV2::readSettings() {
     keepFitMode = settings->keepFitMode();
     imageFitModeDefault = settings->imageFitMode();
     zoomStep = settings->zoomStep();
-    transparencyGridEnabled = settings->transparencyGrid();
     focusIn1to1 = settings->focusPointIn1to1Mode();
-    absoluteStep = settings->absoluteZoomStep();
+    if( (useFixedZoomLevels = settings->useFixedZoomLevels()) ) {
+        // zoomlevels are stored as a string, parse into list
+        zoomLevels.clear();
+        auto levelsStr = settings->zoomLevels().split(',');
+        for(const auto& i : levelsStr)
+            zoomLevels.append(i.toFloat());
+        std::sort(zoomLevels.begin(), zoomLevels.end());
+    }
     // set bg color
     onFullscreenModeChanged(mIsFullscreen);
     updateMinScale();
@@ -219,11 +236,6 @@ void ImageViewerV2::updatePixmap(std::unique_ptr<QPixmap> newPixmap) {
     pixmap->setDevicePixelRatio(dpr);
     pixmapItem.setPixmap(*pixmap);
     pixmapItem.show();
-    // always scale from center
-    pixmapItem.setOffset((scene->width()  / 2.0) - (pixmap->width()  / (dpr * 2.0)),
-                         (scene->height() / 2.0) - (pixmap->height() / (dpr * 2.0)));
-    // always scale from center
-    pixmapItem.setTransformOriginPoint(pixmapItem.boundingRect().center());
     pixmapItem.update();
 }
 
@@ -252,10 +264,6 @@ void ImageViewerV2::showAnimation(std::shared_ptr<QMovie> _movie) {
             if(mViewLock == LOCK_ALL)
                 applySavedViewportPos();
         }
-
-        if(transparencyGridEnabled)
-            drawTransparencyGrid();
-
         startAnimation();
     }
 }
@@ -273,10 +281,6 @@ void ImageViewerV2::showImage(std::unique_ptr<QPixmap> _pixmap) {
             mode = Qt::FastTransformation;
         pixmapItem.setTransformationMode(mode);
         pixmapItem.show();
-        pixmapItem.setOffset((scene->width()  / 2.0) - (pixmap->width()  / (dpr * 2.0)),
-                             (scene->height() / 2.0) - (pixmap->height() / (dpr * 2.0)));
-        // always scale from center
-        pixmapItem.setTransformOriginPoint(pixmapItem.boundingRect().center());
         updateMinScale();
 
         if(!keepFitMode || imageFitMode == FIT_FREE)
@@ -291,9 +295,6 @@ void ImageViewerV2::showImage(std::unique_ptr<QPixmap> _pixmap) {
                 applySavedViewportPos();
         }
         requestScaling();
-
-        if(transparencyGridEnabled)
-            drawTransparencyGrid();
         update();
     }
 }
@@ -305,6 +306,7 @@ void ImageViewerV2::reset() {
     pixmapScaled.reset(nullptr);
     pixmapItem.setPixmap(QPixmap());
     pixmapItem.setScale(1.0f);
+    pixmapItem.setOffset(10000,10000);
     pixmap.reset();
     stopAnimation();
     movie = nullptr;
@@ -319,14 +321,12 @@ void ImageViewerV2::closeImage() {
 }
 
 void ImageViewerV2::setScaledPixmap(std::unique_ptr<QPixmap> newFrame) {
-    if(!movie && newFrame->size() != scaledSize() * dpr)
+    if(!movie && newFrame->size() != scaledSizeR() * dpr)
         return;
 
     pixmapScaled = std::move(newFrame);
     pixmapScaled->setDevicePixelRatio(dpr);
     pixmapItemScaled.setPixmap(*pixmapScaled);
-    pixmapItemScaled.setOffset((scene->width()  / 2.0) - (pixmapScaled->width()  / (dpr * 2.0)),
-                               (scene->height() / 2.0) - (pixmapScaled->height() / (dpr * 2.0)));
     pixmapItem.hide();
     pixmapItemScaled.show();
 }
@@ -352,11 +352,9 @@ void ImageViewerV2::scrollRight() {
 }
 
 // temporary override till application restart
-// todo - use a separate pixmap item?
 void ImageViewerV2::toggleTransparencyGrid() {
-    transparencyGridEnabled = !transparencyGridEnabled;
-    // request a new one as the grid is baked into the current pixmap for performance reasons
-    requestScaling();
+    transparencyGrid = !transparencyGrid;
+    scene->update();
 }
 
 void ImageViewerV2::setScalingFilter(ScalingFilter filter) {
@@ -433,34 +431,7 @@ void ImageViewerV2::requestScaling() {
     // request "real" scaling when graphicsscene scaling is insufficient
     // (it uses a single pass bilinear which is sharp but produces artifacts on low zoom levels)
     if(currentScale() < FAST_SCALE_THRESHOLD)
-        emit scalingRequested(scaledSize() * dpr, mScalingFilter);
-}
-
-void ImageViewerV2::drawTransparencyGrid() {
-    // todo (via tiled pixmap? and just hide if disabled for zero overhead)
-    /*if(pixmapScaled && pixmapScaled->hasAlphaChannel() && pixmapScaled->depth() != 8) {
-        QPainter painter(pixmapScaled.get());
-        painter.setCompositionMode(QPainter::CompositionMode_DestinationOver);
-        QColor dark(90,90,90,255);
-        QColor light(140,140,140,255);
-        int xCount, yCount;
-        xCount = pixmapScaled->width() / CHECKBOARD_GRID_SIZE;
-        yCount = pixmapScaled->height() / CHECKBOARD_GRID_SIZE;
-        QRect square(0, 0, CHECKBOARD_GRID_SIZE, CHECKBOARD_GRID_SIZE);
-        bool evenOdd;
-        for(int i = 0; i <= yCount; i++) {
-            evenOdd = (i % 2);
-            for(int j = 0; j <= xCount; j++) {
-                if(j % 2 == evenOdd)
-                    painter.fillRect(square, light);
-                square.translate(CHECKBOARD_GRID_SIZE, 0);
-            }
-            square.translate(0, CHECKBOARD_GRID_SIZE);
-            square.moveLeft(0);
-        }
-        painter.fillRect(pixmapScaled->rect(), dark);
-    }
-    */
+        emit scalingRequested(scaledSizeR() * dpr, mScalingFilter);
 }
 
 bool ImageViewerV2::imageFits() const {
@@ -473,7 +444,7 @@ bool ImageViewerV2::imageFits() const {
 bool ImageViewerV2::scaledImageFits() const {
     if(!pixmap)
         return true;
-    QSize sz = scaledSize();
+    QSize sz = scaledSizeR();
     return (sz.width()  <= viewport()->width() &&
             sz.height() <= viewport()->height());
 }
@@ -631,15 +602,15 @@ void ImageViewerV2::wheelEvent(QWheelEvent *event) {
                 stopPosAnimation();
                 int dx = pixelDelta.x() ? pixelDelta.x() : angleDelta.x();
                 int dy = pixelDelta.y() ? pixelDelta.y() : angleDelta.y();
-                horizontalScrollBar()->setValue(horizontalScrollBar()->value() - dx * TRACKPAD_SCROLL_MULTIPLIER);
-                verticalScrollBar()->setValue(verticalScrollBar()->value()     - dy * TRACKPAD_SCROLL_MULTIPLIER);
+                hs->setValue(hs->value() - dx * TRACKPAD_SCROLL_MULTIPLIER);
+                vs->setValue(vs->value() - dy * TRACKPAD_SCROLL_MULTIPLIER);
                 centerIfNecessary();
                 snapToEdges();
             }
         } else if(isWheel && settings->imageScrolling() == SCROLL_BY_TRACKPAD_AND_WHEEL) {
             // scroll by interval
             bool scrollable = false;
-            QRect imgRect = scaledRect();
+            QRect imgRect = scaledRectR();
             // shift by 2px in case of img edge misalignment
             // todo: maybe even increase it to skip small distance scrolls?
             if((event->angleDelta().y() < 0 && imgRect.bottom() > height() + 2) ||
@@ -668,6 +639,13 @@ void ImageViewerV2::showEvent(QShowEvent *event) {
     // reapply fitmode to fix viewport position
     if(imageFitMode == FIT_ORIGINAL)
         applyFitMode();
+}
+
+void ImageViewerV2::drawBackground(QPainter *painter, const QRectF &rect) {
+    QGraphicsView::drawBackground(painter, rect);
+    if(!isDisplaying() || !transparencyGrid || !pixmap->hasAlphaChannel())
+        return;
+    painter->drawTiledPixmap(pixmapItem.sceneBoundingRect(), *checkboard);
 }
 
 // simple pan behavior (cursor stops at the screen edges)
@@ -703,26 +681,32 @@ void ImageViewerV2::mouseMoveZoom(QMouseEvent *event) {
 
 // scale at which current image fills the window
 void ImageViewerV2::updateFitWindowScale() {
-    float newMinScaleX = (float) viewport()->width()  * devicePixelRatioF() / pixmap->width();
-    float newMinScaleY = (float) viewport()->height() * devicePixelRatioF() / pixmap->height();
-    if(newMinScaleX < newMinScaleY) {
-        fitWindowScale = newMinScaleX;
+    float scaleFitX = (float) viewport()->width()  * devicePixelRatioF() / pixmap->width();
+    float scaleFitY = (float) viewport()->height() * devicePixelRatioF() / pixmap->height();
+    if(scaleFitX < scaleFitY) {
+        fitWindowScale = scaleFitX;
     } else {
-        fitWindowScale = newMinScaleY;
+        fitWindowScale = scaleFitY;
     }
     if(expandImage && fitWindowScale > expandLimit)
         fitWindowScale = expandLimit;
 }
 
-// limit min scale to window size
 void ImageViewerV2::updateMinScale() {
     if(!pixmap)
         return;
     updateFitWindowScale();
-    if(imageFits())
-        minScale = 1.0f;
-    else
-        minScale = fitWindowScale;
+    if(settings->unlockMinZoom()) {
+        if(!pixmap->isNull())
+            minScale = qMax(10./pixmap->width(), 10./pixmap->height());
+        else
+            minScale = 1.0f;
+    } else {
+        if(imageFits())
+            minScale = 1.0f;
+        else
+            minScale = fitWindowScale;
+    }
     if(mViewLock != LOCK_NONE && lockedScale < minScale)
         minScale = lockedScale;
 }
@@ -741,7 +725,7 @@ void ImageViewerV2::fitWidth() {
     }
     centerIfNecessary();
     // just center somewhere at the top then do snap
-    if(scaledSize().height() > viewport()->height()) {
+    if(scaledSizeR().height() > viewport()->height()) {
         QPointF centerTarget = mapToScene(viewport()->rect()).boundingRect().center();
         centerTarget.setY(0);
         centerOn(centerTarget);
@@ -759,7 +743,15 @@ void ImageViewerV2::fitWindow() {
             swapToOriginalPixmap();
             doZoom(fitWindowScale);
         }
-        centerOnPixmap();
+        // There's either a qt bug or I am misusing something.
+        // First call to scrollbar->setValue() produces wrong results
+        // - unless when called from eventloop
+        if(scrollBarWorkaround) {
+            scrollBarWorkaround = false;
+            QTimer::singleShot(0, this, SLOT(centerOnPixmap()));
+        } else {
+            centerOnPixmap();
+        }
     }
 }
 
@@ -773,7 +765,7 @@ void ImageViewerV2::fitFree(float scale) {
     if(focusIn1to1 == FOCUS_TOP) {
         doZoom(scale);
         centerIfNecessary();
-        if(scaledSize().height() > viewport()->height()) {
+        if(scaledSizeR().height() > viewport()->height()) {
             QPointF centerTarget = sceneRect().center();
             centerTarget.setY(0);
             centerOn(centerTarget);
@@ -857,7 +849,10 @@ void ImageViewerV2::resizeEvent(QResizeEvent *event) {
 }
 
 void ImageViewerV2::centerOnPixmap() {
-    centerOn(pixmapItem.boundingRect().center());
+    auto imgRect = pixmapItem.sceneBoundingRect();
+    auto vport = mapToScene(viewport()->geometry()).boundingRect();
+    hs->setValue(pixmapItem.offset().x() - (int)(vport.width()  - imgRect.width())  / 2);
+    vs->setValue(pixmapItem.offset().y() - (int)(vport.height() - imgRect.height()) / 2);
 }
 
 void ImageViewerV2::stopPosAnimation() {
@@ -884,7 +879,7 @@ void ImageViewerV2::scrollSmooth(int dx, int dy) {
         else
             delta = -SCROLL_DISTANCE;
         bool redirect = false;
-        int currentXPos = horizontalScrollBar()->value();
+        int currentXPos = hs->value();
         int newEndFrame = currentXPos - static_cast<int>(delta);
         if( (newEndFrame < currentXPos && currentXPos < scrollTimeLineX->endFrame()) ||
             (newEndFrame > currentXPos && currentXPos > scrollTimeLineX->endFrame()) )
@@ -909,7 +904,7 @@ void ImageViewerV2::scrollSmooth(int dx, int dy) {
         else
             delta = -SCROLL_DISTANCE;
         bool redirect = false;
-        int currentYPos = verticalScrollBar()->value();
+        int currentYPos = vs->value();
         int newEndFrame = currentYPos - static_cast<int>(delta);
         if( (newEndFrame < currentYPos && currentYPos < scrollTimeLineY->endFrame()) ||
             (newEndFrame > currentYPos && currentYPos > scrollTimeLineY->endFrame()) )
@@ -932,8 +927,8 @@ void ImageViewerV2::scrollSmooth(int dx, int dy) {
 
 void ImageViewerV2::scrollPrecise(int dx, int dy) {
     stopPosAnimation();
-    horizontalScrollBar()->setValue(horizontalScrollBar()->value() + dx);
-    verticalScrollBar()->setValue(verticalScrollBar()->value() + dy);
+    hs->setValue(hs->value() + dx);
+    vs->setValue(vs->value() + dy);
     centerIfNecessary();
     snapToEdges();
     saveViewportPos();
@@ -941,7 +936,7 @@ void ImageViewerV2::scrollPrecise(int dx, int dy) {
 
 // used by scrollTimeLine
 void ImageViewerV2::scrollToX(int x) {
-    horizontalScrollBar()->setValue(x);
+    hs->setValue(x);
     centerIfNecessary();
     snapToEdges();
     update();
@@ -950,7 +945,7 @@ void ImageViewerV2::scrollToX(int x) {
 
 // used by scrollTimeLine
 void ImageViewerV2::scrollToY(int y) {
-    verticalScrollBar()->setValue(y);
+    vs->setValue(y);
     centerIfNecessary();
     snapToEdges();
     update();
@@ -989,11 +984,36 @@ void ImageViewerV2::zoomAnchored(float newScale) {
 
 // zoom in around viewport center
 void ImageViewerV2::zoomIn() {
-    setZoomAnchor(viewport()->rect().center());
-    if(absoluteStep)
-        zoomAnchored(currentScale() + zoomStep);
+    doZoomIn(false);
+}
+
+// zoom in around cursor if its inside window
+void ImageViewerV2::zoomInCursor() {
+    doZoomIn(true);
+}
+
+void ImageViewerV2::doZoomIn(bool atCursor) {
+    if(atCursor && underMouse())
+        setZoomAnchor(mapFromGlobal(cursor().pos()));
     else
-        zoomAnchored(currentScale() * (1.0f + zoomStep));
+        setZoomAnchor(viewport()->rect().center());
+    float newScale = currentScale() * (1.0f + zoomStep);
+    if(useFixedZoomLevels && zoomLevels.count()) {
+        if(currentScale() < zoomLevels.first()) {
+            newScale = qMin(currentScale() * (1.0f + zoomStep), zoomLevels.first());
+        } else if(currentScale() >= zoomLevels.last()) {
+            newScale = currentScale() * (1.0f + zoomStep);
+        } else {
+            for(int i = 0; i < zoomLevels.count(); i++) {
+                float level = zoomLevels.at(i);
+                if(currentScale() < level) {
+                    newScale = level;
+                    break;
+                }
+            }
+        }
+    }
+    zoomAnchored(newScale);
     centerIfNecessary();
     snapToEdges();
     imageFitMode = FIT_FREE;
@@ -1003,11 +1023,36 @@ void ImageViewerV2::zoomIn() {
 
 // zoom out around viewport center
 void ImageViewerV2::zoomOut() {
-    setZoomAnchor(viewport()->rect().center());
-    if(absoluteStep)
-        zoomAnchored(currentScale() - zoomStep);
+    doZoomOut(false);
+}
+
+// zoom out around cursor if its inside window
+void ImageViewerV2::zoomOutCursor() {
+    doZoomOut(true);
+}
+
+void ImageViewerV2::doZoomOut(bool atCursor) {
+    if(atCursor && underMouse())
+        setZoomAnchor(mapFromGlobal(cursor().pos()));
     else
-        zoomAnchored(currentScale() * (1.0f - zoomStep));
+        setZoomAnchor(viewport()->rect().center());
+    float newScale = currentScale() * (1.0f - zoomStep);
+    if(useFixedZoomLevels && zoomLevels.count()) {
+        if(currentScale() > zoomLevels.last()) {
+            newScale = qMax(zoomLevels.last(), currentScale() * (1.0f - zoomStep));
+        } else if(currentScale() <= zoomLevels.first()) {
+            newScale = currentScale() * (1.0f - zoomStep);
+        } else {
+            for(int i = zoomLevels.count() - 1; i >= 0; i--) {
+                float level = zoomLevels.at(i);
+                if(currentScale() > level) {
+                    newScale = level;
+                    break;
+                }
+            }
+        }
+    }
+    zoomAnchored(newScale);
     centerIfNecessary();
     snapToEdges();
     imageFitMode = FIT_FREE;
@@ -1078,17 +1123,17 @@ void ImageViewerV2::applySavedViewportPos() {
 void ImageViewerV2::centerIfNecessary() {
     if(!pixmap)
         return;
-    QSize sz = scaledSize();
-    QPointF centerTarget = mapToScene(viewport()->rect()).boundingRect().center();
+    QSize sz = scaledSizeR();
+    auto imgRect = pixmapItem.sceneBoundingRect();
+    auto vport = mapToScene(viewport()->geometry()).boundingRect();
     if(sz.width() <= viewport()->width())
-        centerTarget.setX(sceneRect().center().x());
+        hs->setValue(pixmapItem.offset().x() - (int)(vport.width()  - imgRect.width())  / 2);
     if(sz.height() <= viewport()->height())
-        centerTarget.setY(sceneRect().center().y());
-    centerOn(centerTarget);
+        vs->setValue(pixmapItem.offset().y() - (int)(vport.height() - imgRect.height()) / 2);
 }
 
 void ImageViewerV2::snapToEdges() {
-    QRect imgRect = scaledRect();
+    QRect imgRect = scaledRectR();
     // current vport center
     QPointF centerTarget = mapToScene(viewport()->rect()).boundingRect().center();
     qreal xShift = 0;
@@ -1108,46 +1153,15 @@ void ImageViewerV2::snapToEdges() {
     centerOn(centerTarget + QPointF(xShift, yShift));
 }
 
-// todo: just merge with zoomIn
-void ImageViewerV2::zoomInCursor() {
-    if(underMouse()) {
-        setZoomAnchor(mapFromGlobal(cursor().pos()));
-        if(absoluteStep)
-            zoomAnchored(currentScale() + zoomStep);
-        else
-            zoomAnchored(currentScale() * (1.0f + zoomStep));
-    } else {
-        zoomIn();
-    }
-    imageFitMode = FIT_FREE;
-    if(pixmapItem.scale() == fitWindowScale)
-        imageFitMode = FIT_WINDOW;
-    centerIfNecessary();
-    snapToEdges();
-}
-
-void ImageViewerV2::zoomOutCursor() {
-    if(underMouse()) {
-        setZoomAnchor(mapFromGlobal(cursor().pos()));
-        if(absoluteStep)
-            zoomAnchored(currentScale() - zoomStep);
-        else
-            zoomAnchored(currentScale() * (1.0f - zoomStep));
-    } else {
-        zoomIn();
-    }
-    imageFitMode = FIT_FREE;
-    if(pixmapItem.scale() == fitWindowScale)
-        imageFitMode = FIT_WINDOW;
-    centerIfNecessary();
-    snapToEdges();
-}
-
 void ImageViewerV2::doZoom(float newScale) {
     if(!pixmap)
         return;
     newScale = qBound(minScale, newScale, 500.0f);
+    // fix scene position to integer values
+    auto tl = pixmapItem.sceneBoundingRect().topLeft().toPoint();
+    pixmapItem.setOffset(tl);
     pixmapItem.setScale(newScale);
+
     pixmapItem.setTransformationMode(selectTransformationMode());
     swapToOriginalPixmap();
     emit scaleChanged(newScale);
@@ -1172,15 +1186,15 @@ QRectF ImageViewerV2::sceneRoundRect(QRectF sceneRect) const {
 }
 
 // size as it appears on screen (rounded)
-QSize ImageViewerV2::scaledSize() const {
+QSize ImageViewerV2::scaledSizeR() const {
     if(!pixmap)
         return QSize(0,0);
     QRectF pixmapSceneRect = pixmapItem.mapRectToScene(pixmapItem.boundingRect());
     return sceneRoundRect(pixmapSceneRect).size().toSize();
 }
 
-// in viewport coords
-QRect ImageViewerV2::scaledRect() const {
+// in viewport coords (rounded up)
+QRect ImageViewerV2::scaledRectR() const {
     QRectF pixmapSceneRect = pixmapItem.mapRectToScene(pixmapItem.boundingRect());
     return QRect(mapFromScene(pixmapSceneRect.topLeft()),
                  mapFromScene(pixmapSceneRect.bottomRight()));

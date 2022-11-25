@@ -109,7 +109,7 @@ private:
     std::shared_ptr<InfoBarProxy> infoBarWindowed;
     FloatingMessageProxy *floatingMessage;
 
-    PanelHPosition panelPosition;
+    PanelPosition panelPosition;
     CurrentInfo info;
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     QDesktopWidget desktopWidget;
@@ -128,15 +128,17 @@ private:
     void setupCopyOverlay();
     void setupSaveOverlay();
     void setupRenameOverlay();
-
     void preShowResize(QSize sz);
+    void setInteractionEnabled(bool mode);
+
 private slots:
     void updateCurrentDisplay();
     void readSettings();
     void adaptToWindowState();
-
     void onWindowGeometryChanged();
     void onInfoUpdated();
+    void showScriptSettings();
+
 protected:
     void mouseMoveEvent(QMouseEvent *event);
     bool event(QEvent *event);

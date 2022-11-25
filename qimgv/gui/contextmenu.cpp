@@ -53,7 +53,7 @@ ContextMenu::ContextMenu(QWidget *parent) :
     //  entries
     ui->print->setAction("print");
     ui->print->setText(tr("Print"));
-    ui->print->setIconPath(":/res/icons/common/menuitem/settings16.png");
+    ui->print->setIconPath(":/res/icons/common/menuitem/print16.png");
 
     ui->copy->setAction("copyFile");
     ui->copy->setText(tr("Quick copy"));
@@ -65,22 +65,25 @@ ContextMenu::ContextMenu(QWidget *parent) :
 
     ui->trash->setAction("moveToTrash");
     ui->trash->setText(tr("Move to trash"));
-    ui->trash->setIconPath(":/res/icons/common/menuitem/trash-red16.png");
+    ui->trash->setIconPath(":/res/icons/common/menuitem/trash16.png");
+    ui->trash->setShortcutText("");
     // -------------------------------------------------------------------------
     ui->open->setAction("open");
     ui->open->setText(tr("Open"));
     ui->open->setIconPath(":/res/icons/common/menuitem/open16.png");
+    ui->open->setShortcutText("");
 
     ui->folderView->setAction("folderView");
     ui->folderView->setText(tr("Folder View"));
     ui->folderView->setIconPath(":/res/icons/common/menuitem/folderview16.png");
+    ui->folderView->setShortcutText("");
 
     ui->settings->setAction("openSettings");
     ui->settings->setText(tr("Settings"));
     ui->settings->setIconPath(":/res/icons/common/menuitem/settings16.png");
     // -------------------------------------------------------------------------
     ui->openWith->setText(tr("Open with..."));
-    ui->openWith->setIconPath(":/res/icons/common/menuitem/forward16.png");
+    ui->openWith->setIconPath(":/res/icons/common/menuitem/run16.png");
     ui->openWith->setPassthroughClicks(false);
     connect(ui->openWith, &ContextMenuItem::pressed, this, &ContextMenu::switchToScriptsPage);
     // -------------------------------------------------------------------------
@@ -99,6 +102,7 @@ ContextMenu::ContextMenu(QWidget *parent) :
     ui->scriptSetupButton->setText(tr("Configure menu"));
     ui->scriptSetupButton->setIconPath(":/res/icons/common/menuitem/settings16.png");
     connect(ui->backButton, &ContextMenuItem::pressed, this, &ContextMenu::switchToMainPage);
+    connect(ui->scriptSetupButton, &ContextMenuItem::pressed, this, &ContextMenu::showScriptSettings);
     fillOpenWithMenu();
 }
 
