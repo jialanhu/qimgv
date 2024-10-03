@@ -155,15 +155,7 @@ qimgv-git
 ### Ubuntu / Linux Mint / Pop!\_OS / etc.
 
 ```
-sudo add-apt-repository ppa:easymodo/qimgv
-sudo apt update
 sudo apt install qimgv
-```
-
-_Alternative package with kde support:_
-
-```
-sudo apt install qimgv-kde
 ```
 
 ### Fedora
@@ -194,6 +186,14 @@ xbps-install -S qimgv
 
 ```
 apk add qimgv
+```
+
+## BSD
+
+### FreeBSD
+
+```
+pkg install qimgv
 ```
 
 This list may be incomplete. 
