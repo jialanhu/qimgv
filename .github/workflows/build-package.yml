@@ -15,7 +15,7 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          install: git p7zip
+          install: git p7zip mingw-w64-x86_64-ngtcp2
 
       - uses: actions/checkout@v4
         with: 
