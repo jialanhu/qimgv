@@ -94,6 +94,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     fitModeGrp.addButton(ui->fitModeWindow);
     fitModeGrp.addButton(ui->fitModeWidth);
     fitModeGrp.addButton(ui->fitMode1to1);
+    fitModeGrp.addButton(ui->fitModeWindowStretch);
     folderEndGrp.addButton(ui->folderEndSwitchFolder);
     folderEndGrp.addButton(ui->folderEndNoAction);
     folderEndGrp.addButton(ui->folderEndLoop);
@@ -106,6 +107,7 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     langs.insert("en_US", "English");
     langs.insert("es_ES", "Español");
     langs.insert("fr_FR", "Français");
+    langs.insert("ja_JP", "日本語");
     langs.insert("tr_TR", "Türkçe");
     langs.insert("uk_UA", "Українська");
     langs.insert("zh_CN", "简体中文");
@@ -274,6 +276,8 @@ void SettingsDialog::readSettings() {
         ui->fitModeWindow->setChecked(true);
     else if(settings->imageFitMode() == FIT_WIDTH)
         ui->fitModeWidth->setChecked(true);
+    else if(settings->imageFitMode() == FIT_WINDOW_STRETCH)
+        ui->fitModeWindowStretch->setChecked(true);
     else
         ui->fitMode1to1->setChecked(true);
 
@@ -308,6 +312,8 @@ void SettingsDialog::saveSettings() {
         settings->setImageFitMode(FIT_WINDOW);
     else if(ui->fitModeWidth->isChecked())
         settings->setImageFitMode(FIT_WIDTH);
+    else if(ui->fitModeWindowStretch->isChecked())
+        settings->setImageFitMode(FIT_WINDOW_STRETCH);
     else
         settings->setImageFitMode(FIT_ORIGINAL);
 

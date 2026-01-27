@@ -73,6 +73,7 @@ public slots:
     virtual void setFitOriginal();
     virtual void setFitWidth();
     virtual void setFitWindow();
+    virtual void setFitWindowStretch();
     virtual void zoomIn();
     virtual void zoomOut();
     virtual void zoomInCursor();
@@ -113,6 +114,7 @@ protected:
     void showEvent(QShowEvent *event);
     void drawBackground(QPainter *painter, const QRectF &rect);
 
+    bool eventFilter(QObject *o, QEvent *ev);
 protected slots:
     void onAnimationTimer();
 
@@ -123,6 +125,7 @@ private slots:
     void centerOnPixmap();
     void onScrollTimelineFinished();
 
+    void onDPRChanged();
 private:
     QGraphicsScene *scene;
     std::shared_ptr<QPixmap> pixmap;
@@ -153,7 +156,7 @@ private:
     bool wayland = false;
 
     float zoomStep = 0.1, dpr;
-    float minScale, maxScale, fitWindowScale, expandLimit, lockedScale;
+    float minScale, maxScale, fitWindowScale, fitWindowStretchScale, expandLimit, lockedScale;
     QPointF savedViewportPos;
     ViewLockMode mViewLock;
 
@@ -171,6 +174,7 @@ private:
     void fitNormal();
     void fitWidth();
     void fitWindow();
+    void fitWindowStretch();
 
     void scroll(int dx, int dy, bool animated);
 
@@ -194,6 +198,7 @@ private:
     void scrollSmooth(int dx, int dy);
     void scrollPrecise(int dx, int dy);
     void updateFitWindowScale();
+    void updateFitWindowStretchScale();
     void updateMinScale();
     void fitFree(float scale);
     void applySavedViewportPos();

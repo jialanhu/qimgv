@@ -19,6 +19,7 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
     minScale(0.01f),
     maxScale(500.0f),
     fitWindowScale(0.125f),
+    fitWindowStretchScale(0.125f),
     mViewLock(LOCK_NONE),
     imageFitMode(FIT_WINDOW),
     mScalingFilter(QI_FILTER_BILINEAR),
@@ -60,7 +61,7 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
 
     lastTouchpadScroll.start();
 
-    zoomThreshold = static_cast<int>(devicePixelRatioF() * 4.);
+    zoomThreshold = static_cast<int>(dpr * 4.);
 
     pixmapItem.setTransformationMode(Qt::SmoothTransformation);
     pixmapItem.setScale(1.0f);
@@ -97,6 +98,35 @@ ImageViewerV2::ImageViewerV2(QWidget *parent) : QGraphicsView(parent),
 }
 
 ImageViewerV2::~ImageViewerV2() {
+}
+
+// devicePixelRatioF() does not provide correct value on wayland until the first paint event occurs
+// catch change event & do the needful
+bool ImageViewerV2::eventFilter(QObject *o, QEvent *ev) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
+    if(ev->type() == QEvent::DevicePixelRatioChange) {
+        onDPRChanged();
+    }
+#endif
+    return QObject::eventFilter(o, ev);
+}
+
+void ImageViewerV2::onDPRChanged() {
+    if(dpr == this->devicePixelRatioF())
+        return;
+    qDebug() << "DPR CHANGED " << dpr << " >> " << this->devicePixelRatioF();
+    dpr = this->devicePixelRatioF();
+    zoomThreshold = static_cast<int>(dpr * 4.);
+    if(pixmap) {
+        pixmap->setDevicePixelRatio(dpr);
+        pixmapItem.setPixmap(*pixmap);
+        pixmapItem.show();
+        pixmapItem.update();
+        updateMinScale();
+        applyFitMode();
+        requestScaling();
+        update();
+    }
 }
 
 void ImageViewerV2::readSettings() {
@@ -336,7 +366,6 @@ void ImageViewerV2::closeImage() {
 void ImageViewerV2::setScaledPixmap(std::unique_ptr<QPixmap> newFrame) {
     if(!movie && newFrame->size() != scaledSizeR() * dpr)
         return;
-
     pixmapScaled = std::move(newFrame);
     pixmapScaled->setDevicePixelRatio(dpr);
     pixmapItemScaled.setPixmap(*pixmapScaled);
@@ -450,8 +479,8 @@ void ImageViewerV2::requestScaling() {
 bool ImageViewerV2::imageFits() const {
     if(!pixmap)
         return true;
-    return (pixmap->width()  <= (viewport()->width()  * devicePixelRatioF()) &&
-            pixmap->height() <= (viewport()->height() * devicePixelRatioF()));
+    return (pixmap->width()  <= (viewport()->width()  * dpr) &&
+            pixmap->height() <= (viewport()->height() * dpr));
 }
 
 bool ImageViewerV2::scaledImageFits() const {
@@ -706,12 +735,14 @@ void ImageViewerV2::mouseMoveZoom(QMouseEvent *event) {
     snapToEdges();
     if(pixmapItem.scale() == fitWindowScale)
         imageFitMode = FIT_WINDOW;
+    else if(pixmapItem.scale() == fitWindowStretchScale)
+        imageFitMode = FIT_WINDOW_STRETCH;
 }
 
 // scale at which current image fills the window
 void ImageViewerV2::updateFitWindowScale() {
-    float scaleFitX = (float) viewport()->width()  * devicePixelRatioF() / pixmap->width();
-    float scaleFitY = (float) viewport()->height() * devicePixelRatioF() / pixmap->height();
+    float scaleFitX = (float) viewport()->width()  * dpr / pixmap->width();
+    float scaleFitY = (float) viewport()->height() * dpr / pixmap->height();
     if(scaleFitX < scaleFitY) {
         fitWindowScale = scaleFitX;
     } else {
@@ -721,10 +752,25 @@ void ImageViewerV2::updateFitWindowScale() {
         fitWindowScale = expandLimit;
 }
 
+void ImageViewerV2::updateFitWindowStretchScale() {
+    if(!pixmap)
+        return;
+
+    float scaleFitY = (float) viewport()->height() * dpr / pixmap->height();
+
+    // For "Fit in window (stretch)", we always use height-based scaling
+    // This ensures the full image is always visible while stretching to fill the window height
+    fitWindowStretchScale = scaleFitY;
+
+    if(expandImage && fitWindowStretchScale > expandLimit)
+        fitWindowStretchScale = expandLimit;
+}
+
 void ImageViewerV2::updateMinScale() {
     if(!pixmap)
         return;
     updateFitWindowScale();
+    updateFitWindowStretchScale();
     if(settings->unlockMinZoom()) {
         if(!pixmap->isNull())
             minScale = qMax(10./pixmap->width(), 10./pixmap->height());
@@ -743,7 +789,7 @@ void ImageViewerV2::updateMinScale() {
 void ImageViewerV2::fitWidth() {
     if(!pixmap)
         return;
-    float scaleX = (float)viewport()->width() * devicePixelRatioF() / pixmap->width();
+    float scaleX = (float)viewport()->width() * dpr / pixmap->width();
     if(!expandImage && scaleX > 1.0f)
         scaleX = 1.0f;
     if(scaleX > expandLimit)
@@ -788,6 +834,27 @@ void ImageViewerV2::fitNormal() {
     fitFree(1.0f);
 }
 
+void ImageViewerV2::fitWindowStretch() {
+    if(!pixmap)
+        return;
+
+    // Update the stretch scale calculation
+    updateFitWindowStretchScale();
+
+    if(currentScale() != fitWindowStretchScale) {
+        swapToOriginalPixmap();
+        doZoom(fitWindowStretchScale);
+    }
+
+    // Handle scrollbar workaround similar to fitWindow()
+    if(scrollBarWorkaround) {
+        scrollBarWorkaround = false;
+        QTimer::singleShot(0, this, SLOT(centerOnPixmap()));
+    } else {
+        centerOnPixmap();
+    }
+}
+
 void ImageViewerV2::fitFree(float scale) {
     if(!pixmap)
         return;
@@ -822,6 +889,9 @@ void ImageViewerV2::applyFitMode() {
         case FIT_WINDOW:
             fitWindow();
             break;
+        case FIT_WINDOW_STRETCH:
+            fitWindowStretch();
+            break;
         default:
             break;
     }
@@ -851,6 +921,12 @@ void ImageViewerV2::setFitWidth() {
 // public, sends scale request
 void ImageViewerV2::setFitWindow() {
     setFitMode(FIT_WINDOW);
+    requestScaling();
+}
+
+// public, sends scale request
+void ImageViewerV2::setFitWindowStretch() {
+    setFitMode(FIT_WINDOW_STRETCH);
     requestScaling();
 }
 
@@ -1038,6 +1114,8 @@ void ImageViewerV2::doZoomIn(bool atCursor) {
     imageFitMode = FIT_FREE;
     if(pixmapItem.scale() == fitWindowScale)
         imageFitMode = FIT_WINDOW;
+    else if(pixmapItem.scale() == fitWindowStretchScale)
+        imageFitMode = FIT_WINDOW_STRETCH;
 }
 
 // zoom out around viewport center
@@ -1077,6 +1155,8 @@ void ImageViewerV2::doZoomOut(bool atCursor) {
     imageFitMode = FIT_FREE;
     if(pixmapItem.scale() == fitWindowScale)
         imageFitMode = FIT_WINDOW;
+    else if(pixmapItem.scale() == fitWindowStretchScale)
+        imageFitMode = FIT_WINDOW_STRETCH;
 }
 
 void ImageViewerV2::toggleLockZoom() {
