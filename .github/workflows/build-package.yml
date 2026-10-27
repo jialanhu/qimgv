@@ -24,6 +24,7 @@ jobs:
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-pkgconf
             mingw-w64-x86_64-libheif
+            mingw-w64-x86_64-extra-cmake-modules
             mingw-w64-x86_64-ngtcp2
 
       - uses: actions/checkout@v4
