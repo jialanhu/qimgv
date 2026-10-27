@@ -47,9 +47,11 @@ int main(int argc, char *argv[]) {
     //qputenv("QT_SCALE_FACTOR","1.5");
     //qputenv("QT_SCREEN_SCALE_FACTORS", "1;1.7");
 
-    // do we still need this?
-    qputenv("QT_AUTO_SCREEN_SCALE_FACTOR","0");
-
+    // Follow the platform's display scale factor (Windows "Scale and layout",
+    // KDE/GNOME scaling, etc). Do not set QT_AUTO_SCREEN_SCALE_FACTOR=0 here:
+    // in Qt5 that explicitly opts out of DPI-based scaling and overrides
+    // AA_EnableHighDpiScaling, so qimgv would stay at 1x on a 4K display
+    // running at 200%.
 #if (QT_VERSION_MAJOR == 5)
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QGuiApplication::setAttribute(Qt::AA_UseHighDpiPixmaps);

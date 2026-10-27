@@ -106,13 +106,16 @@ _Note: The script file must be an executable. Also, "shebang" (`#!/bin/bash`) ne
 
 When you've created your script go to __Settings > Controls > Add__, then select it and assign a shortcut like for any regular action.
 
-## HiDPI (Linux / MacOS only)
+## HiDPI
 
-If qimgv appears too small / too big on your display, you can override the scale factor. Example:
+qimgv follows the display scale factor configured in the operating system
+(Windows "Scale and layout", macOS, KDE/GNOME, etc.).
+
+If qimgv still appears too small / too big on your display, you can override the scale factor. Example:
 ```
 QT_SCALE_FACTOR="1.5" qimgv /path/to/image.png
 ```
-You can put it in `qimgv.desktop` file to make it permanent. Using values less than `1.0` is not supported.
+This value is applied on top of the system scale factor. You can put it in `qimgv.desktop` file to make it permanent. Using values less than `1.0` is not supported.
 
 qimgv should also obey the global scale factor set in KDE's systemsettings.
 
