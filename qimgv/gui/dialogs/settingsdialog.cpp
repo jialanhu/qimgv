@@ -75,9 +75,9 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
 #endif
 
 #ifdef USE_OPENCV
-    ui->scalingQualityComboBox->addItem("Bilinear+sharpen (OpenCV)");
-    ui->scalingQualityComboBox->addItem("Bicubic (OpenCV)");
-    ui->scalingQualityComboBox->addItem("Bicubic+sharpen (OpenCV)");
+    ui->scalingQualityComboBox->addItem(tr("Bilinear+sharpen (OpenCV)"));
+    ui->scalingQualityComboBox->addItem(tr("Bicubic (OpenCV)"));
+    ui->scalingQualityComboBox->addItem(tr("Bicubic+sharpen (OpenCV)"));
 #endif
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -114,8 +114,9 @@ SettingsDialog::SettingsDialog(QWidget *parent) :
     // fill langs combobox, sorted by locale
     ui->langComboBox->addItems(langs.values());
     // insert system language entry manually at the beginning
-    langs.insert("system", "System language");
-    ui->langComboBox->insertItem(0, "System language");
+    const QString systemLanguage = tr("System language");
+    langs.insert("system", systemLanguage);
+    ui->langComboBox->insertItem(0, systemLanguage);
 
     connect(this, &SettingsDialog::settingsChanged, settings, &Settings::sendChangeNotification);
     readSettings();
@@ -267,7 +268,7 @@ void SettingsDialog::readSettings() {
     // language
     QString langName = langs.value(settings->language());
     if(langName.isEmpty() || ui->langComboBox->findText(langName) == -1)
-        ui->langComboBox->setCurrentText("en_US");
+        ui->langComboBox->setCurrentText(langs.value("en_US"));
     else
         ui->langComboBox->setCurrentText(langName);
 

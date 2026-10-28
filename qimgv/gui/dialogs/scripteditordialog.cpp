@@ -56,16 +56,16 @@ void ScriptEditorDialog::onNameChanged(QString name) {
     if(editMode) {
         if(name != editTarget && scriptManager->scriptExists(name)) {
             ui->messageLabel->setText(tr("A script with this same name exists"));
-            okBtnText = "Replace";
+            okBtnText = tr("Replace");
         } else {
-            okBtnText = "Save";
+            okBtnText = tr("Save");
         }
     } else {
         if(scriptManager->scriptExists(name)) {
             ui->messageLabel->setText(tr("A script with this same name exists"));
-            okBtnText = "Replace";
+            okBtnText = tr("Replace");
         } else {
-            okBtnText = "Create";
+            okBtnText = tr("Create");
         }
     }
     ui->acceptButton->setText(okBtnText);
@@ -75,9 +75,9 @@ void ScriptEditorDialog::selectScriptPath() {
     QFileDialog dialog;
     QString file;
 #ifdef _WIN32
-    file = dialog.getOpenFileName(this, tr("Select an executable/script"), "", "Executable/script (*.exe *.bat)");
+    file = dialog.getOpenFileName(this, tr("Select an executable/script"), "", tr("Executable/script (*.exe *.bat)"));
 #else
-    file = dialog.getOpenFileName(this, tr("Select a script file"), "", "Shell script (*.sh)");
+    file = dialog.getOpenFileName(this, tr("Select a script file"), "", tr("Shell script (*.sh)"));
 #endif
     if(!file.isEmpty()) {
         ui->pathLineEdit->setText("\"" + file + "\"" + " %file%");

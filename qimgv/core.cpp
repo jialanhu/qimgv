@@ -1136,7 +1136,7 @@ void Core::setWallpaper() {
         return;
     auto img = model->getImage(selectedPath());
     if(img->type() != DocumentType::STATIC) {
-        mw->showMessage("Set wallpaper: file not supported");
+        mw->showMessage(tr("Set wallpaper: file not supported"));
         return;
     }
 #ifdef __WIN32
@@ -1159,7 +1159,7 @@ void Core::setWallpaper() {
     else if(session.contains("gnome"))
         ScriptManager::runCommand("gsettings set org.gnome.desktop.background picture-uri \"" + selectedPath() + "\"");
     else
-        mw->showMessage("Action is not supported in your desktop session (\"" + session + "\")", 3000);
+        mw->showMessage(tr("Action is not supported in your desktop session (\"%1\")").arg(QString::fromLocal8Bit(session)), 3000);
 #endif
 }
 

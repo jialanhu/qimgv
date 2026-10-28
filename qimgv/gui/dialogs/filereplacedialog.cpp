@@ -23,17 +23,17 @@ void FileReplaceDialog::setDestination(QString dst) {
 
 void FileReplaceDialog::setMode(FileReplaceMode mode) {
     if(mode == FILE_TO_FILE) {
-        setWindowTitle("File already exists");
-        ui->titleLabel->setText("Replace destination file?");
+        setWindowTitle(tr("File already exists"));
+        ui->titleLabel->setText(tr("Replace destination file?"));
     } else if(mode == DIR_TO_DIR) {
-        setWindowTitle("Directory already exists");
-        ui->titleLabel->setText("Merge directories?");
+        setWindowTitle(tr("Directory already exists"));
+        ui->titleLabel->setText(tr("Merge directories?"));
     } else if(mode == DIR_TO_FILE) {
-        setWindowTitle("Destination already exists");
-        ui->titleLabel->setText("There is a file with that name. Replace?");
+        setWindowTitle(tr("Destination already exists"));
+        ui->titleLabel->setText(tr("There is a file with that name. Replace?"));
     } else { // FILE_TO_DIR
-        setWindowTitle("Destination already exists");
-        ui->titleLabel->setText("There is a folder with that name. Replace?");
+        setWindowTitle(tr("Destination already exists"));
+        ui->titleLabel->setText(tr("There is a folder with that name. Replace?"));
     }
 }
 

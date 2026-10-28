@@ -53,7 +53,7 @@ void ImageInfoOverlay::setExifInfo(QMap<QString, QString> info) {
         entryStub.setText("");
     } else {
         ui->entryLayout->addWidget(&entryStub);
-        entryStub.setText("<no metadata found>");
+        entryStub.setText(tr("<no metadata found>"));
     }
 
     if(!isHidden() && entryCount != info.count()) {

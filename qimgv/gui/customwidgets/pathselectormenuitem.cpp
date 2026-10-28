@@ -11,7 +11,7 @@ PathSelectorMenuItem::PathSelectorMenuItem(QWidget *parent)
     connect(&mIconWidget, &IconButton::clicked, [this]() {
         QFileDialog dialog;
         dialog.setDirectory(mDirectory);
-        dialog.setWindowTitle("Select directory");
+        dialog.setWindowTitle(tr("Select directory"));
         dialog.setWindowModality(Qt::ApplicationModal);
         dialog.setFileMode(QFileDialog::Directory);
         dialog.setOption(QFileDialog::ShowDirsOnly);

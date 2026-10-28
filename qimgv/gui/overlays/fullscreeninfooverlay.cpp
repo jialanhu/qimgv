@@ -9,7 +9,7 @@ FullscreenInfoOverlay::FullscreenInfoOverlay(FloatingWidgetContainer *parent) :
     setPosition(FloatingWidgetPosition::TOPLEFT);
     this->setHorizontalMargin(0);
     this->setVerticalMargin(0);
-    ui->nameLabel->setText("No file opened");
+    ui->nameLabel->setText(tr("No file opened"));
     if(parent)
         setContainerSize(parent->size());
 }

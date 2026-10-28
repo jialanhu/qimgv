@@ -6,7 +6,7 @@ ShortcutCreatorDialog::ShortcutCreatorDialog(QWidget *parent) :
     ui(new Ui::ShortcutCreatorDialog)
 {
     ui->setupUi(this);
-    setWindowTitle("Add shortcut");
+    setWindowTitle(tr("Add shortcut"));
     actionList = appActions->getList();
     scriptList = scriptManager->scriptNames();
 
@@ -35,7 +35,7 @@ QString ShortcutCreatorDialog::selectedShortcut() {
 void ShortcutCreatorDialog::onShortcutEdited() {
     QString action = actionManager->actionForShortcut(ui->sequenceEdit->sequence());
     if(!action.isEmpty())
-        ui->warningLabel->setText("This shortcut is used for action: " + action + ". Replace?");
+        ui->warningLabel->setText(tr("This shortcut is used for action: %1. Replace?").arg(action));
     else
         ui->warningLabel->setText("");
 }
