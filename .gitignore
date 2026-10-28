@@ -19,3 +19,5 @@ release/
 *.user
 ui_settingsdialog.h
 Makefile
+build-win64/
+qimgv-win64_*
