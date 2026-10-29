@@ -215,6 +215,9 @@ This list may be incomplete.
 
 ## Compiling from source
 
+qimgv now targets **Qt 6.12**. The legacy Qt5 build is still available with
+`-DUSE_QT5=ON`.
+
 See [Compiling qimgv from source](https://github.com/easymodo/qimgv/wiki/Compiling-qimgv-from-source) on the wiki
 
 # Donate

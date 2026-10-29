@@ -1,6 +1,9 @@
 #!/bin/bash
 # This builds a complete qimgv-x64 package. Result is placed in qimgv/qimgv-x64_<version>
 # Warning: Some stuff will be left over behind after building (C:/qt and C:/opencv-4.5.5-minimal)
+#
+# NOTE: This MSYS2-native script still uses the legacy Qt5 toolchain. Use
+# scripts/build-qimgv-linux.sh for the Qt 6.12 cross build.
 
 #CFL='-ffunction-sections -fdata-sections -march=native -mtune=native -O3 -pipe'
 CFL='-ffunction-sections -fdata-sections -O3 -pipe'
@@ -88,6 +91,7 @@ sed -i 's|opencv4/||' $SRC_DIR/qimgv/3rdparty/QtOpenCV/cvmatandqimage.{h,cpp}
 cmake -S $SRC_DIR -B $BUILD_DIR -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH=$CUSTOM_QT_DIR \
+    -DUSE_QT5=ON \
     -DOpenCV_DIR=$OPENCV_DIR \
     -DOPENCV_SUPPORT=ON \
     -DVIDEO_SUPPORT=ON \

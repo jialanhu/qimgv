@@ -498,7 +498,11 @@ bool ViewerWidget::eventFilter(QObject *object, QEvent *event) {
                 return false;
         } else {
             auto enterEvent = dynamic_cast<QEnterEvent*>(event);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+            mousePos = enterEvent->position().toPoint();
+#else
             mousePos = enterEvent->pos();
+#endif
         }
         if(clickZoneOverlay->leftZone().contains(mousePos)) {
             clickZoneOverlay->setPressed(false);

@@ -474,6 +474,16 @@ void MW::mouseReleaseEvent(QMouseEvent *event) {
 
 void MW::mouseDoubleClickEvent(QMouseEvent *event) {
     event->accept();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QMouseEvent *fakePressEvent = new QMouseEvent(
+        QEvent::MouseButtonPress,
+        event->position(),
+        event->globalPosition(),
+        event->button(),
+        event->buttons(),
+        event->modifiers()
+    );
+#else
     QMouseEvent *fakePressEvent = new QMouseEvent(
         QEvent::MouseButtonPress,
         event->pos(),
@@ -481,6 +491,7 @@ void MW::mouseDoubleClickEvent(QMouseEvent *event) {
         event->buttons(),
         event->modifiers()
     );
+#endif
     actionManager->processEvent(fakePressEvent);
     actionManager->processEvent(event);
 }

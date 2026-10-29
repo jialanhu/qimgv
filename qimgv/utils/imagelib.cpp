@@ -40,7 +40,11 @@ QImage* ImageLib::flippedHRaw(const QImage *src) {
     if(!src)
         return new QImage();
     else
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        return new QImage(src->flipped(Qt::Horizontal));
+#else
         return new QImage(src->mirrored(true, false));
+#endif
 }
 //------------------------------------------------------------------------------
 QImage* ImageLib::flippedH(std::shared_ptr<const QImage> src) {
@@ -51,7 +55,11 @@ QImage* ImageLib::flippedVRaw(const QImage *src) {
     if(!src)
         return new QImage();
     else
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        return new QImage(src->flipped(Qt::Vertical));
+#else
         return new QImage(src->mirrored(false, true));
+#endif
 }
 //------------------------------------------------------------------------------
 QImage* ImageLib::flippedV(std::shared_ptr<const QImage> src) {

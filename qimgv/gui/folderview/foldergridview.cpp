@@ -29,7 +29,11 @@ FolderGridView::FolderGridView(QWidget *parent)
 
 void FolderGridView::dropEvent(QDropEvent *event) {
     event->accept();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    ThumbnailWidget *item = dynamic_cast<ThumbnailWidget*>(itemAt(event->position().toPoint()));
+#else
     ThumbnailWidget *item = dynamic_cast<ThumbnailWidget*>(itemAt(event->pos()));
+#endif
     int index = -1;
     if(item) {
         index = thumbnails.indexOf(item);
@@ -44,7 +48,11 @@ void FolderGridView::dragEnterEvent(QDragEnterEvent *event) {
 
 void FolderGridView::dragMoveEvent(QDragMoveEvent *event) {
     event->accept();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    ThumbnailWidget *item = dynamic_cast<ThumbnailWidget*>(itemAt(event->position().toPoint()));
+#else
     ThumbnailWidget *item = dynamic_cast<ThumbnailWidget*>(itemAt(event->pos()));
+#endif
     int index = -1;
     if(item)
         index = thumbnails.indexOf(item);

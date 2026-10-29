@@ -3,12 +3,12 @@
 # build-qimgv-linux.sh - cross-compile qimgv for 64-bit Windows on Linux.
 #
 # This is the Linux counterpart of scripts/build-qimgv.sh (which runs inside
-# MSYS2 on Windows). It uses a MinGW-w64 cross toolchain and a Qt 5 build for
-# the Windows target. The recommended way to get all of that is MXE:
+# MSYS2 on Windows). It uses a MinGW-w64 cross toolchain and a Qt 6.12 build
+# for the Windows target. The recommended way to get all of that is MXE:
 #
 #   git clone https://github.com/mxe/mxe.git "$HOME/mxe"
 #   make -C "$HOME/mxe" MXE_TARGETS=x86_64-w64-mingw32.shared \
-#        qtbase qtsvg qttools exiv2 opencv
+#        qt6-qtbase qt6-qtsvg qt6-qttools qt6-qtimageformats exiv2 opencv
 #   ./scripts/build-qimgv-linux.sh --package
 #
 # If Exiv2, OpenCV or libmpv is not available, the corresponding feature is
@@ -167,8 +167,8 @@ BUILD_DIR="$(mkdir -p "$(dirname -- "$BUILD_DIR")" && cd -- "$(dirname -- "$BUIL
 # Locate a MinGW-w64 toolchain + Windows Qt installation.
 #
 # We support two layouts:
-#   1. MXE:  <mxe>/usr/<target>/ (Qt in <mxe>/usr/<target>/qt5)
-#   2. Distro cross packages: /usr/x86_64-w64-mingw32 (Qt in .../qt5 or ...)
+#   1. MXE:  <mxe>/usr/<target>/ (Qt in <mxe>/usr/<target>/qt6)
+#   2. Distro cross packages: /usr/x86_64-w64-mingw32 (Qt in .../qt6 or ...)
 # ------------------------------------------------------------------------------
 CROSS_PREFIX=""
 CROSS_BIN=""
@@ -202,13 +202,13 @@ find_mxe() {
         fi
 
         for target in "${targets[@]}"; do
-            if [[ -x "$root/usr/bin/$target-g++" && -d "$root/usr/$target/qt5" ]]; then
+            if [[ -x "$root/usr/bin/$target-g++" && -d "$root/usr/$target/qt6" ]]; then
                 MXE_ROOT="$root"
                 MXE_TARGET="$target"
                 CROSS_PREFIX="$root/usr/$target"
                 CROSS_BIN="$root/usr/bin"
                 CROSS_SUFFIX="$target"
-                QT_ROOT="$root/usr/$target/qt5"
+                QT_ROOT="$root/usr/$target/qt6"
                 return 0
             fi
         done
@@ -227,12 +227,11 @@ find_distro_prefix() {
 
     for prefix in "${prefixes[@]}"; do
         [[ -d "$prefix" ]] || continue
-        if [[ -d "$prefix/qt5" ]]; then
+        if [[ -d "$prefix/qt6" ]]; then
             CROSS_PREFIX="$prefix"
             CROSS_SUFFIX="x86_64-w64-mingw32"
-            QT_ROOT="$prefix/qt5"
-        elif [[ -f "$prefix/lib/cmake/Qt5/Qt5Config.cmake" || \
-                -f "$prefix/lib/cmake/Qt6/Qt6Config.cmake" ]]; then
+            QT_ROOT="$prefix/qt6"
+        elif [[ -f "$prefix/lib/cmake/Qt6/Qt6Config.cmake" ]]; then
             CROSS_PREFIX="$prefix"
             CROSS_SUFFIX="x86_64-w64-mingw32"
             QT_ROOT="$prefix"
@@ -253,17 +252,17 @@ find_distro_prefix() {
 }
 
 if [[ -n "${MINGW_PREFIX:-}" && -z "${MXE_DIR:-}" ]]; then
-    find_distro_prefix || die "MINGW_PREFIX=$MINGW_PREFIX does not contain a MinGW Qt5/Qt6 installation"
+    find_distro_prefix || die "MINGW_PREFIX=$MINGW_PREFIX does not contain a MinGW Qt 6.12 installation"
 elif ! find_mxe; then
     if ! find_distro_prefix; then
         cat >&2 <<EOF
-error: no Windows Qt installation for MinGW-w64 was found.
+error: no Windows Qt 6.12 installation for MinGW-w64 was found.
 
 Install MXE and build the needed packages (this is the recommended setup):
 
     git clone https://github.com/mxe/mxe.git "\$HOME/mxe"
     make -C "\$HOME/mxe" MXE_TARGETS=x86_64-w64-mingw32.shared \\
-         qtbase qtsvg qttools exiv2 opencv
+         qt6-qtbase qt6-qtsvg qt6-qttools qt6-qtimageformats exiv2 opencv
 
 Then run this script again:
 
@@ -271,10 +270,10 @@ Then run this script again:
 
 For a quick Qt-only build:
 
-    make -C "\$HOME/mxe" MXE_TARGETS=x86_64-w64-mingw32.shared qtbase qtsvg qttools
+    make -C "\$HOME/mxe" MXE_TARGETS=x86_64-w64-mingw32.shared qt6-qtbase qt6-qtsvg qt6-qttools
     ./scripts/build-qimgv-linux.sh --minimal
 
-Alternatively, point MINGW_PREFIX at a sysroot that has a Windows Qt5/Qt6
+Alternatively, point MINGW_PREFIX at a sysroot that has a Windows Qt 6.12
 build for MinGW-w64, for example an Arch Linux mingw-w64 cross prefix:
 
     MINGW_PREFIX=/usr/x86_64-w64-mingw32 ./scripts/build-qimgv-linux.sh
@@ -310,17 +309,14 @@ fi
 TRIPLET="${CROSS_SUFFIX%%.*}"
 CROSS_GCC_REAL="$(readlink -f -- "$CROSS_GCC" 2>/dev/null || printf '%s' "$CROSS_GCC")"
 
-if [[ ! -f "$QT_ROOT/lib/cmake/Qt5/Qt5Config.cmake" && \
-      ! -f "$QT_ROOT/lib/cmake/Qt6/Qt6Config.cmake" ]]; then
-    die "no Qt5/Qt6 CMake package found under $QT_ROOT"
+if [[ ! -f "$QT_ROOT/lib/cmake/Qt6/Qt6Config.cmake" ]]; then
+    die "no Qt 6.12 CMake package found under $QT_ROOT"
 fi
 
-# qimgv uses qt5_add_translation() unconditionally, so the Qt LinguistTools
-# CMake package and lrelease must be present even if translations are not
-# interesting for a local build.
-if [[ ! -d "$QT_ROOT/lib/cmake/Qt5LinguistTools" && \
-      ! -d "$QT_ROOT/lib/cmake/Qt6LinguistTools" ]]; then
-    die "Qt LinguistTools not found under $QT_ROOT; install the MXE qttools package (make qttools)"
+# qimgv's translation targets need Qt6 LinguistTools and lrelease even if
+# translations are not interesting for a local build.
+if [[ ! -d "$QT_ROOT/lib/cmake/Qt6LinguistTools" ]]; then
+    die "Qt6 LinguistTools not found under $QT_ROOT; install the MXE qt6-qttools package"
 fi
 
 note "MinGW-w64: $CROSS_PREFIX"
@@ -473,6 +469,15 @@ set(PKG_CONFIG_EXECUTABLE "$CROSS_PKG_CONFIG" CACHE FILEPATH "Cross pkg-config")
 set(CMAKE_EXPORT_NO_PACKAGE_REGISTRY ON)
 EOF
 
+# Qt 6 cross builds need host tools in addition to the target libraries. MXE's
+# cmake wrapper sets QT_HOST_PATH itself; the generated toolchain above needs
+# an explicit value.
+QT_HOST_PATH=""
+if [[ -n "$MXE_ROOT" && -d "$MXE_ROOT/usr/x86_64-pc-linux-gnu/qt6" ]]; then
+    QT_HOST_PATH="$MXE_ROOT/usr/x86_64-pc-linux-gnu/qt6"
+    printf 'set(QT_HOST_PATH "%s" CACHE PATH "Qt6 host tools")\n' "$QT_HOST_PATH" >> "$TOOLCHAIN_FILE"
+fi
+
 # ------------------------------------------------------------------------------
 # Configure and build.
 # ------------------------------------------------------------------------------
@@ -482,7 +487,7 @@ CMAKE_ARGS=(
     -G Ninja
     -DCMAKE_BUILD_TYPE="$BUILD_TYPE"
     -DCMAKE_PREFIX_PATH="$CROSS_PREFIX;$QT_ROOT"
-    -DUSE_QT5=ON
+    -DUSE_QT5=OFF
     -DEXIV2="$([[ "$WITH_EXIV2" == "on" ]] && echo ON || echo OFF)"
     -DOPENCV_SUPPORT="$([[ "$WITH_OPENCV" == "on" ]] && echo ON || echo OFF)"
     -DVIDEO_SUPPORT="$([[ "$WITH_VIDEO" == "on" ]] && echo ON || echo OFF)"
@@ -646,8 +651,8 @@ package_build() {
     # Qt is dynamically linked only for MXE's "shared" target (or distro Qt
     # builds). Static Qt targets do not need the plugins or Qt DLLs.
     local qt_shared=0
-    if compgen -G "$QT_ROOT/bin/Qt[56]Core*.dll" >/dev/null 2>&1 || \
-       compgen -G "$CROSS_PREFIX/bin/Qt[56]Core*.dll" >/dev/null 2>&1; then
+    if compgen -G "$QT_ROOT/bin/Qt6Core*.dll" >/dev/null 2>&1 || \
+       compgen -G "$CROSS_PREFIX/bin/Qt6Core*.dll" >/dev/null 2>&1; then
         qt_shared=1
     fi
 

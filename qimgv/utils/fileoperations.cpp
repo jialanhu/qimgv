@@ -115,7 +115,7 @@ void FileOperations::copyFileTo(const QString &srcFilePath, const QString &destD
         result = FileOpResult::SUCCESS;
         // restore timestamps
         QFile dstF(destFile.absoluteFilePath());
-        dstF.open(QIODevice::ReadWrite);
+        (void) dstF.open(QIODevice::ReadWrite);
         dstF.setFileTime(srcModTime, QFileDevice::FileModificationTime);
         dstF.setFileTime(srcReadTime, QFileDevice::FileAccessTime);
         dstF.close();
@@ -192,7 +192,7 @@ void FileOperations::moveFileTo(const QString &srcFilePath, const QString &destD
             result = FileOpResult::SUCCESS;
             // restore timestamps
             QFile dstF(destFile.absoluteFilePath());
-            dstF.open(QIODevice::ReadWrite);
+            (void) dstF.open(QIODevice::ReadWrite);
             // dstF.setFileTime(srcBirthTime, QFileDevice::FileBirthTime); // TODO: does not work (linux)
             dstF.setFileTime(srcModTime, QFileDevice::FileModificationTime);
             dstF.setFileTime(srcReadTime, QFileDevice::FileAccessTime);

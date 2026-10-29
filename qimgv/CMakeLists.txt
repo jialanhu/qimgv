@@ -8,7 +8,7 @@ if(APPLE)
 endif()
 
 # TRANSLATIONS
-find_package(Qt${QT_VERSION_MAJOR} COMPONENTS LinguistTools)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS LinguistTools)
 # Example of creating a new translation file.
 # 1. cd into qimgv directory and run:
 #   lupdate -recursive . -ts res/translations/qimgv_en_US.ts    [replace "en_US" with your locale]

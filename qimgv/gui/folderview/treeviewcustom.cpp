@@ -17,7 +17,11 @@ TreeViewCustom::TreeViewCustom(QWidget *parent) : QTreeView(parent) {
 }
 
 void TreeViewCustom::dropEvent(QDropEvent *event) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QModelIndex dropIndex = indexAt(event->position().toPoint());
+#else
     QModelIndex dropIndex = indexAt(event->pos());
+#endif
     if(dropIndex.isValid()) {
         QList<QString> paths;
         // TODO: QUrl gave me some issues previosly, test
