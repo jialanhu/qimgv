@@ -2047,7 +2047,7 @@
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
-        <source>Use thumbnail cache (recommended)</source>
+        <source>Use on-disk thumbnail cache</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

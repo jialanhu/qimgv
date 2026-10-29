@@ -602,7 +602,7 @@ package_build() {
     declare -A seen=()
 
     rm -rf -- "$PACKAGE_DIR"
-    mkdir -p "$PACKAGE_DIR"/{cache,conf,thumbnails}
+    mkdir -p "$PACKAGE_DIR"/{cache,conf}
 
     cp "$EXE" "$PACKAGE_DIR/"
     queue+=("$PACKAGE_DIR/qimgv.exe")

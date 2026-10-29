@@ -4461,7 +4461,7 @@
                      <string/>
                     </property>
                     <property name="text">
-                     <string>Use thumbnail cache (recommended)</string>
+                     <string>Use on-disk thumbnail cache</string>
                     </property>
                    </widget>
                   </item>

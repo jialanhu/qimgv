@@ -1962,6 +1962,11 @@
         <translation>在后台加载相邻图片</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
+        <source>Use on-disk thumbnail cache</source>
+        <translation>使用磁盘缩略图缓存</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4510"/>
         <source>JPEG save quality:</source>
         <translation>JPEG 保存质量:</translation>
@@ -2025,11 +2030,6 @@
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4495"/>
         <source>Show save overlay when editing images</source>
         <translation>在编辑图像时显示保存覆盖</translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
-        <source>Use thumbnail cache (recommended)</source>
-        <translation>使用缩略图缓存 (推荐)</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4637"/>

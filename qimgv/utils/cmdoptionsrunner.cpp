@@ -9,7 +9,8 @@ void CmdOptionsRunner::generateThumbs(QString dirPath, int size) {
         return;
     }
 
-    Thumbnailer th;
+    // --gen-thumbs explicitly asks for persistent thumbnails.
+    Thumbnailer th(true);
     DirectoryManager dm;
     if(!dm.setDirectoryRecursive(dirPath)) {
         qDebug() << "Error: Invalid path.";

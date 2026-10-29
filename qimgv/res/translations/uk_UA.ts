@@ -1779,6 +1779,11 @@
         <translation>Межа віджетів</translation>
     </message>
     <message>
+        <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
+        <source>Use on-disk thumbnail cache</source>
+        <translation>Використовувати кеш мініатюр на диску</translation>
+    </message>
+    <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4884"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -2116,11 +2121,6 @@ li.checked::marker { content: &quot;\2612&quot;; }
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4554"/>
         <source>q</source>
         <translation></translation>
-    </message>
-    <message>
-        <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
-        <source>Use thumbnail cache (recommended)</source>
-        <translation>Використовувати кеш превью (рекомендовано)</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4583"/>

@@ -2047,8 +2047,8 @@
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
-        <source>Use thumbnail cache (recommended)</source>
-        <translation>Küçük resim önbelleğini kullan (önerilir)</translation>
+        <source>Use on-disk thumbnail cache</source>
+        <translation>Disk üzerindeki küçük resim önbelleğini kullan</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4471"/>

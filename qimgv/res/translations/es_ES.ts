@@ -2047,8 +2047,8 @@
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
-        <source>Use thumbnail cache (recommended)</source>
-        <translation>Usar caché de miniaturas (recomendado)</translation>
+        <source>Use on-disk thumbnail cache</source>
+        <translation>Usar caché de miniaturas en disco</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4471"/>

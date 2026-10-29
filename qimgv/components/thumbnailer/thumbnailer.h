@@ -9,7 +9,7 @@ class Thumbnailer : public QObject
 {
     Q_OBJECT
 public:
-    explicit Thumbnailer();
+    explicit Thumbnailer(bool forceDiskCache = false);
     ~Thumbnailer();
     static std::shared_ptr<Thumbnail> getThumbnail(QString filePath, int size);
     void clearTasks();
@@ -21,6 +21,7 @@ public slots:
 private:
     ThumbnailCache *cache;
     QThreadPool *pool;
+    bool forceDiskCache;
     void startThumbnailerThread(QString filePath, int size, bool crop, bool force);
     QMultiMap<QString, int> runningTasks;
 

@@ -2047,8 +2047,8 @@
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
-        <source>Use thumbnail cache (recommended)</source>
-        <translation>Utiliser le cache des vignettes (recommandé)</translation>
+        <source>Use on-disk thumbnail cache</source>
+        <translation>Utiliser le cache des vignettes sur disque</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4471"/>

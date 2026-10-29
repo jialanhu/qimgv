@@ -16,6 +16,8 @@ bool ThumbnailCache::exists(QString id) {
 
 void ThumbnailCache::saveThumbnail(QImage *image, QString id) {
     if(image) {
+        if(!QDir(cacheDirPath).exists())
+            QDir().mkpath(cacheDirPath);
         QString filePath = thumbnailPath(id);
         image->save(filePath, "PNG", 15);
     }

@@ -2047,8 +2047,8 @@
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4464"/>
-        <source>Use thumbnail cache (recommended)</source>
-        <translation>サムネイルキャッシュを使用する（推奨）</translation>
+        <source>Use on-disk thumbnail cache</source>
+        <translation>ディスク上のサムネイルキャッシュを使用する</translation>
     </message>
     <message>
         <location filename="../../gui/dialogs/settingsdialog.ui" line="4471"/>

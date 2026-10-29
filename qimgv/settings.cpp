@@ -55,12 +55,14 @@ void Settings::setupCache() {
         mTmpDir->mkpath(mTmpDir->absolutePath());
     }
     mThumbCacheDir = new QDir(mTmpDir->absolutePath() + "/thumbnails");
-    mThumbCacheDir->mkpath(mThumbCacheDir->absolutePath());
+    if(useThumbnailCache())
+        mThumbCacheDir->mkpath(mThumbCacheDir->absolutePath());
 #else
     mTmpDir = new QDir(QApplication::applicationDirPath() + "/cache");
     mTmpDir->mkpath(mTmpDir->absolutePath());
     mThumbCacheDir = new QDir(QApplication::applicationDirPath() + "/thumbnails");
-    mThumbCacheDir->mkpath(mThumbCacheDir->absolutePath());
+    if(useThumbnailCache())
+        mThumbCacheDir->mkpath(mThumbCacheDir->absolutePath());
 #endif
 }
 //------------------------------------------------------------------------------
@@ -722,7 +724,8 @@ void Settings::setEnableSmoothScroll(bool mode) {
 }
 //------------------------------------------------------------------------------
 bool Settings::useThumbnailCache() {
-    return settings->settingsConf->value("thumbnailCache", true).toBool();
+    // Disk thumbnail caching is disabled by default.
+    return settings->settingsConf->value("thumbnailCache", false).toBool();
 }
 
 void Settings::setUseThumbnailCache(bool mode) {
