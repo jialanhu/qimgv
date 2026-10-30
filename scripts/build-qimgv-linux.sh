@@ -54,6 +54,12 @@
 #
 set -euo pipefail
 
+# Qt 6 build tools (uic/moc/rcc) expect a UTF-8 locale. Avoid noisy fallback
+# warnings in minimal containers such as the CI image.
+if [[ -z "${LC_ALL:-}" ]]; then
+    export LC_ALL=C.UTF-8
+fi
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 SRC_DIR="$(dirname -- "$SCRIPT_DIR")"
 VERSION="$(git -C "$SRC_DIR" describe --tags --always 2>/dev/null || echo "1.0.2")"
